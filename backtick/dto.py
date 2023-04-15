@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import quote
 
 from pydantic import BaseModel, validator
@@ -9,8 +9,8 @@ from . import settings, utils
 
 class ScheduleRequestDTO(BaseModel):
     task_name: str
-    queue_name: str | None = None
-    when: datetime.datetime | None = None
+    queue_name: str = settings.BACKTICK_QUEUES["default"]
+    when: datetime.datetime | Literal[""] | None = None
     cron: str | None = None
     kwargs: dict[str, Any] = {}
 
@@ -28,7 +28,7 @@ class ScheduleRequestDTO(BaseModel):
     def check_queue_name(cls, value):
         # Check that value doesn't contain any URL unsafe special characters
         if (sanitized_value := quote(value, safe="%")) != value:
-            raise ValueError("Queue name contains unsafe characters")
+            raise ValueError("Queue name contains URL-unsafe characters")
 
         if sanitized_value not in settings.BACKTICK_QUEUES:
             raise ValueError(f"Queue {value} is not registered")

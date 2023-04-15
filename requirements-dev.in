@@ -8,3 +8,5 @@ pip-tools
 
 # For testing.
 pytest
+
+types-redis
