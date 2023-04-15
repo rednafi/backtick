@@ -25,11 +25,12 @@ def exception_handler(request, exc):
 @app.post("/schedule")
 def schedule(item: dto.ScheduleRequestDTO) -> dto.ScheduleResponseDTO:
     """Schedule a task."""
-    task_id = dispatch.dispatch_task(schedule_dto=item)
+    task_id = dispatch.enqueue_task(schedule_dto=item)
     return dto.ScheduleResponseDTO(task_id=task_id, message="Scheduled")
 
 
 @app.post("/unschedule")
 def unschedule(item: dto.UnscheduleRequestDTO) -> dto.UnscheduleResponseDTO:
     """Unschedule a task."""
-    return dto.UnscheduleResponseDTO(task_id="123", message="Unscheduled")
+    dispatch.cancel_task(task_id=item.task_id)
+    return dto.UnscheduleResponseDTO(task_id=item.task_id, message="Unscheduled")

@@ -16,5 +16,5 @@ BACKTICK_TASKS = {
 
 BACKTICK_QUEUES = {
     "default": "default",
-    "queue_a": "queue_a",
+    "scheduled": "scheduled",
 }

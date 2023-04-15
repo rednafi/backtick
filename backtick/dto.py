@@ -2,7 +2,7 @@ import datetime
 from typing import Any, Literal
 from urllib.parse import quote
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator, validator
 
 from . import settings, utils
 
@@ -34,17 +34,12 @@ class ScheduleRequestDTO(BaseModel):
             raise ValueError(f"Queue {value} is not registered")
         return sanitized_value
 
-    @validator("when", "cron")
-    def check_when_and_cron(cls, value, values):
-        # Check that only one of when and cron is specified
-        if value and (values.get("cron") or values.get("when")):
-            raise ValueError("Cannot specify both when and cron")
-
-        # Check that at least one of when and cron is specified
-        if not any((value, values.get("cron"), values.get("when"))):
-            raise ValueError("Must specify either when or cron")
-
-        return value
+    @root_validator()
+    def check_when_and_cron(cls, values):
+        # Check that when and cron are not both set
+        if values.get("when") and values.get("cron"):
+            raise ValueError("Cannot set both when and cron")
+        return values
 
     @validator("kwargs")
     def check_kwargs_match_task_kwargs(cls, value, values):

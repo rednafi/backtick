@@ -11,7 +11,7 @@ def main():
 
     scheduler = Scheduler(
         connection=utils.get_redis(),
-        interval=30,
+        interval=5,
         queue_name=settings.BACKTICK_QUEUES["scheduled"],
     )
     scheduler.run()
