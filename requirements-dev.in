@@ -1,0 +1,10 @@
+# For linting.
+black
+ruff
+mypy
+
+# For dep management.
+pip-tools
+
+# For testing.
+pytest
