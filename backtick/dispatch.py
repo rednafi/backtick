@@ -37,14 +37,18 @@ def submit_task(*, schedule_dto: dto.ScheduleRequestDTO) -> str:
 
     if not (when or cron):
         # Enqueue the job to be run immediately
+        logging.info("Enqueuing eager task %s", task_name_dto)
         job = queue.enqueue(task, **kwargs_dto)
 
     elif when and not cron:
         # If 'when' is provided but not 'cron', schedule the job to run at 'when'
+        logging.info("Enqueuing scheduled task %s", task_name_dto)
         scheduler = rq_scheduler.Scheduler(queue=queue, connection=utils.get_redis())
         job = scheduler.enqueue_at(when, task, **kwargs_dto)
 
     elif cron:
+        logging.info("Enqueuing cron task %s", task_name_dto)
+
         # If both 'when' and 'cron' are provided, schedule the job to run using 'cron' schedule
         scheduler = rq_scheduler.Scheduler(queue=queue, connection=utils.get_redis())
 
@@ -77,7 +81,7 @@ def submit_task(*, schedule_dto: dto.ScheduleRequestDTO) -> str:
 
     else:
         # When and cron are mutually exclusive. So this should never happen
-        pass
+        raise ValueError("This should never happen")
 
     return job.id
 

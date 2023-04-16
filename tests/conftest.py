@@ -1,8 +1,12 @@
+"""Canned objects for testing."""
+
 import pytest
 
 
 @pytest.fixture()
 def mock_settings():
+    """Return canned settings."""
+
     class Settings:
         BACKTICK_TASKS = {
             "task1": lambda *, foo, bar: (foo, bar),

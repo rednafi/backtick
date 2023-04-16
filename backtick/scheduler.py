@@ -1,5 +1,3 @@
-"""Vendored rq_scheduler.scripts.rqscheduler module."""
-
 from rq_scheduler.scripts import rqscheduler
 
 

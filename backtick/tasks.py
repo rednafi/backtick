@@ -1,5 +1,3 @@
-"""The background tasks live here."""
-
 import logging
 import time
 

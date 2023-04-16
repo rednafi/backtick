@@ -1,4 +1,3 @@
-"""The environment variables live here."""
 import os
 
 import dotenv

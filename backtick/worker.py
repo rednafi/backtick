@@ -1,3 +1,5 @@
+"""Start the worker process."""
+
 # Preload libraries
 from rq import Worker
 

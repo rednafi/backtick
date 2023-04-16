@@ -1,5 +1,3 @@
-"""The api endpoints live here."""
-
 from http import HTTPStatus
 
 from fastapi import FastAPI
