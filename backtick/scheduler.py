@@ -1,20 +1,10 @@
 """Vendored rq_scheduler.scripts.rqscheduler module."""
 
-from rq_scheduler.scheduler import Scheduler
-from rq_scheduler.utils import setup_loghandlers
-
-from . import settings, utils
+from rq_scheduler.scripts import rqscheduler
 
 
-def main():
-    setup_loghandlers(settings.BACKTICK_LOG_LEVEL)
-
-    scheduler = Scheduler(
-        connection=utils.get_redis(),
-        interval=5,
-        queue_name=settings.BACKTICK_QUEUES["scheduled"],
-    )
-    scheduler.run()
+def main() -> None:
+    rqscheduler.main()
 
 
 if __name__ == "__main__":

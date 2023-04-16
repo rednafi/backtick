@@ -4,7 +4,7 @@ import logging
 import time
 
 
-def do_something(*, how_long) -> None:
+def do_something(*, how_long: int) -> None:
     """Do something for a while.
 
     Args:

@@ -2,15 +2,15 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
+import crontab
 import redis
 
 from . import settings
 
-Func = Callable[..., Any]
 __cache = {}
 
 
-def check_keyword_only_func(func: Func) -> bool:
+def check_keyword_only_func(func: Callable[..., Any]) -> bool:
     """Check that a function is keyword only
 
     Args:
@@ -27,7 +27,9 @@ def check_keyword_only_func(func: Func) -> bool:
     )
 
 
-def check_func_kwargs_match_kwargs(func: Func, kwargs: dict[str, Any]) -> bool:
+def check_func_kwargs_match_kwargs(
+    func: Callable[..., Any], kwargs: dict[str, Any]
+) -> bool:
     """Check that the kwargs match the function kwargs.
 
     Args:
@@ -48,6 +50,22 @@ def check_func_kwargs_match_kwargs(func: Func, kwargs: dict[str, Any]) -> bool:
         if param_name not in kwargs and param.default is inspect.Parameter.empty:
             return False
 
+    return True
+
+
+def check_cron(cron_str: str) -> bool:
+    """Check that a cron expression is valid.
+
+    Args:
+        cron_str (str): The cron expression to check
+
+    Returns:
+        bool: True if the cron expression is valid, False otherwise
+    """
+    try:
+        crontab.CronTab(cron_str)
+    except ValueError:
+        return False
     return True
 
 

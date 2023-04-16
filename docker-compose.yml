@@ -1,0 +1,54 @@
+services:
+  redis:
+    image: "redis:alpine"
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - "./.redis_data:/data"
+
+  web:
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      context: ./
+    volumes:
+      - ".:/code"
+    entrypoint:
+      - /bin/sh
+      - "-c"
+      - |
+        gunicorn backtick.views:app --workers 4 \
+          --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+
+  scheduler:
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      context: ./
+    volumes:
+      - ".:/code"
+    entrypoint: "python -m backtick.scheduler --url 'redis://redis:6379/0' --interval 10"
+    depends_on:
+      - redis
+    scale: 1
+
+  worker:
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      context: ./
+    volumes:
+      - ".:/code"
+    entrypoint: python -m backtick.worker
+    depends_on:
+      - redis
+    scale: 1
