@@ -4,6 +4,4 @@ gunicorn
 httpx
 python-dotenv
 rq
-rq-scheduler
 uvicorn[standard]
-
