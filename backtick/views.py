@@ -24,25 +24,10 @@ def exception_handler(request: Request, exc: Exception) -> JSONResponse:
 @app.post("/schedule")
 def schedule(item: dto.ScheduleRequestDTO) -> dto.ScheduleResponseDTO:
     """Schedule a task."""
-    task_id = dispatch.submit_task(schedule_dto=item)
-    return dto.ScheduleResponseDTO(task_id=task_id, message="Scheduled")
+    return dispatch.submit_tasks(schedule_request_dto=item)
 
 
 @app.post("/unschedule")
-def unschedule(
-    request: Request, item: dto.UnscheduleRequestDTO
-) -> dto.UnscheduleResponseDTO:
+def unschedule(item: dto.UnscheduleRequestDTO) -> dto.UnscheduleResponseDTO:
     """Unschedule a task."""
-
-    try:
-        dispatch.cancel_task(task_id=item.task_id)
-    except ValueError as exc:
-        return JSONResponse(
-            status_code=HTTPStatus.BAD_REQUEST,
-            content={
-                "type": request.url.path,
-                "title": "Bad Request",
-                "detail": str(exc),
-            },
-        )
-    return dto.UnscheduleResponseDTO(task_id=item.task_id, message="Unscheduled")
+    return dispatch.cancel_tasks(unschedule_request_dto=item)

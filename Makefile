@@ -58,7 +58,17 @@ help: ## Show this help message.
 
 .PHONY: test
 test: ## Run the tests against the current version of Python.
-	pytest -v -s
+	docker compose exec test pytest -v -s
+
+
+.PHONY: test_integration
+test_integration: ## Run the integration tests against the current version of Python.
+	docker compose exec test pytest -v -s -m integration
+
+
+.PHONY: test_unit
+test_unit: ## Run the unit tests against the current version of Python.
+	docker compose exec test pytest -v -s -m 'not integration'
 
 
 .PHONY: dep-lock

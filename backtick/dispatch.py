@@ -1,112 +1,121 @@
 import logging
+from typing import cast
 
 import rq
-import rq_scheduler
+import rq.exceptions
 
 from . import dto, settings, utils
 
 
-def submit_task(*, schedule_dto: dto.ScheduleRequestDTO) -> str:
-    """Schedule a task on a worker.
+def submit_tasks(
+    *, schedule_request_dto: dto.ScheduleRequestDTO
+) -> dto.ScheduleResponseDTO:
+    """Schedule tasks on a worker.
 
     Args:
-        task (function): The task to schedule.
-        schedule_dto (dto.ScheduleRequestDTO): The schedule dto.
+        schedule_dto (dto.ScheduleRequestDTO): The schedule request dto.
 
     Returns:
-        str: The task id.
+        dto.ScheduleResponseDTO: The schedule response dto.
     """
 
     # Incoming dto names
-    task_name_dto = schedule_dto.task_name
-    queue_name_dto = schedule_dto.queue_name
-    when_dto = schedule_dto.when
-    cron_dto = schedule_dto.cron
-    kwargs_dto = schedule_dto.kwargs
+    task_name = schedule_request_dto.task_name
+    datetimes = schedule_request_dto.datetimes
+    kwargs = schedule_request_dto.kwargs
 
-    task = settings.BACKTICK_TASKS[task_name_dto]
-    queue_name = (
-        settings.BACKTICK_QUEUES[queue_name_dto]
-        if queue_name_dto
-        else settings.BACKTICK_QUEUES["default"]
-    )
-    when = when_dto
-    cron = cron_dto
+    task = cast(rq.job.Job, utils.discover_task(settings.BACKTICK_TASKS[task_name]))
 
-    queue = rq.Queue(queue_name, connection=utils.get_redis())
+    queue_name = task.queue
+    connection = task.connection
+    timeout = task.timeout
+    result_ttl = task.result_ttl
+    ttl = task.ttl
+    queue_class = task.queue_class
+    depends_on = task.depends_on
+    at_front = task.at_front
+    meta = task.meta
+    description = task.description
+    failure_ttl = task.failure_ttl
+    retry = task.retry
+    on_failure = task.on_failure
+    on_success = task.on_success
 
-    if not (when or cron):
-        # Enqueue the job to be run immediately
-        logging.info("Enqueuing eager task %s", task_name_dto)
-        job = queue.enqueue(task, **kwargs_dto)
+    queue = queue_class(name=queue_name, connection=connection)
+    if datetimes:
+        job_ids = []
 
-    elif when and not cron:
-        # If 'when' is provided but not 'cron', schedule the job to run at 'when'
-        logging.info("Enqueuing scheduled task %s", task_name_dto)
-        scheduler = rq_scheduler.Scheduler(queue=queue, connection=utils.get_redis())
-        job = scheduler.enqueue_at(when, task, **kwargs_dto)
-
-    elif cron:
-        logging.info("Enqueuing cron task %s", task_name_dto)
-
-        # If both 'when' and 'cron' are provided, schedule the job to run using 'cron' schedule
-        scheduler = rq_scheduler.Scheduler(queue=queue, connection=utils.get_redis())
-
-        # fmt: off
-        job = scheduler.cron(
-            # A cron string (e.g. "0 0 * * 0")
-            cron.cron_str,
-
-            # The function to be queued
-            func=task,
-
-            # Keyword arguments passed into function when executed
-            kwargs=kwargs_dto,
-
-            # Repeat this number of times (None means repeat forever)
-            repeat=cron.repeat or None,
-
-            # Specify how long (in seconds) successful jobs and their results are kept.
-            # Defaults to -1 (forever)
-            result_ttl=cron.result_ttl or -1,
-
-            # Specifies the maximum queued time (in seconds) before it's discarded.
-            # Defaults to None (infinite TTL).
-            ttl=cron.ttl or None,
-
-            # Interpret hours in the local timezone
-            use_local_timezone=False,
-        )
-        # fmt: on
-
+        for dt in datetimes:
+            job = queue.enqueue_at(
+                dt,
+                task,
+                kwargs=kwargs,
+                timeout=timeout,
+                result_ttl=result_ttl,
+                ttl=ttl,
+                depends_on=depends_on,
+                at_front=at_front,
+                meta=meta,
+                description=description,
+                failure_ttl=failure_ttl,
+                retry=retry,
+                on_failure=on_failure,
+                on_success=on_success,
+            )
+            logging.info("Task %s scheduled at %s", job.id, dt)
+            job_ids.append(job.id)
     else:
-        # When and cron are mutually exclusive. So this should never happen
-        raise ValueError("This should never happen")
+        job = queue.enqueue(
+            task,
+            kwargs=kwargs,
+            timeout=timeout,
+            result_ttl=result_ttl,
+            ttl=ttl,
+            depends_on=depends_on,
+            at_front=at_front,
+            meta=meta,
+            description=description,
+            failure_ttl=failure_ttl,
+            retry=retry,
+            on_failure=on_failure,
+            on_success=on_success,
+        )
+        logging.info("Task %s scheduled", job.id)
+        job_ids = [job.id]
 
-    return job.id
+    return dto.ScheduleResponseDTO(
+        task_ids=job_ids, message="Tasks scheduled successfully"
+    )
 
 
-def cancel_task(task_id: str) -> None:
+def cancel_tasks(
+    *, unschedule_request_dto: dto.UnscheduleRequestDTO
+) -> dto.UnscheduleResponseDTO:
     """Cancel a task.
 
     Args:
-        task_id (str): The task id.
-        queue_name (str): The queue name.
+        unschedule_dto (dto.UnscheduleRequestDTO): The unschedule request dto.
+
+    Returns:
+        dto.UnscheduleResponseDTO: The unschedule response dto.
     """
-    logging.info("Cancelling task %s", task_id)
 
     # Cancel running jobs
+    task_ids = unschedule_request_dto.task_ids
 
-    try:
-        job = rq.job.Job.fetch(task_id, connection=utils.get_redis())
-    except rq.exceptions.NoSuchJobError:
-        raise ValueError(f"Task {task_id} not found")
+    jobs = rq.job.Job.fetch_many(task_ids, connection=utils.get_redis())
+    task_ids = []
 
-    # Cancel running jobs
-    job.cancel()
+    for job in jobs:
+        logging.info("Task %s", job.id)
+        rq.cancel_job(
+            job.id,
+            connection=job.connection,
+            serializer=job.serializer,
+            enqueue_dependents=unschedule_request_dto.enqueue_dependents,
+        )
+        task_ids.append(job.id)
 
-    # Cancel scheduled jobs
-    queue_name = settings.BACKTICK_QUEUES["default"]
-    queue = rq.Queue(queue_name, connection=utils.get_redis())
-    scheduler = rq_scheduler.Scheduler(queue=queue, connection=utils.get_redis())
-    scheduler.cancel(job)
+    return dto.UnscheduleResponseDTO(
+        task_ids=task_ids, message="Tasks unscheduled successfully"
+    )

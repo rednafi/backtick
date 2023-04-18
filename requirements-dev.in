@@ -10,3 +10,4 @@ pip-tools
 pytest
 
 types-redis
+httpx

@@ -1,7 +1,7 @@
 import datetime
-import re
+import zoneinfo
+from contextlib import ExitStack
 from unittest.mock import patch
-from urllib.parse import quote
 
 import pytest
 
@@ -9,121 +9,231 @@ from backtick import dto
 
 
 class TestScheduleRequestDTO:
-    VALID_TASK_NAME = "task1"
-    DOES_NOT_EXIST_TASK_NAME = "does_not_exist_task"
-    VALID_QUEUE_NAME = "default"
-    DOES_NOT_EXIST_QUEUE_NAME = "does_not_exist_queue"
+    """Test ScheduleRequestDTO."""
 
-    VALID_DATETIME = datetime.datetime(1970, 1, 1, 0, 0, 0)
-    VALID_CRON = "0 12 * * *"
-    VALID_KWARGS = {"foo": "hello", "bar": "world"}
+    def test_task_name_ok(self, mock_settings):
+        """Test task_name."""
 
-    INVALID_TASK_NAME = "invalid&task"
-    INVALID_QUEUE_NAME = "invalid queue"
-    INVALID_DATETIME = "not a datetime"
-    INVALID_CRON = "invalid cron expression"
-    INVALID_KWARGS = {"invalid_kwarg": True}
+        stack = ExitStack()
+        stack.enter_context(
+            patch("backtick.dto.utils.discover_task", return_value=lambda: None)
+        )
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
 
-    def test_check_task_name_valid(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            request = dto.ScheduleRequestDTO(task_name=self.VALID_TASK_NAME)
-            assert request.task_name == quote(self.VALID_TASK_NAME, safe="%")
-
-    def test_check_task_name_invalid_characters(self):
-        with pytest.raises(ValueError, match="Task name contains unsafe characters"):
-            dto.ScheduleRequestDTO(task_name=self.INVALID_TASK_NAME)
-
-    def test_check_task_name_not_registered(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            with pytest.raises(
-                ValueError, match="Task does_not_exist_task is not registered"
-            ):
-                dto.ScheduleRequestDTO(task_name=self.DOES_NOT_EXIST_TASK_NAME)
-
-    def test_check_queue_name_valid(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            request = dto.ScheduleRequestDTO(
-                task_name=self.VALID_TASK_NAME, queue_name=self.VALID_QUEUE_NAME
+        with stack:
+            schedule_request_dto = dto.ScheduleRequestDTO(
+                task_name="task1",
             )
-            assert request.queue_name == quote(self.VALID_QUEUE_NAME, safe="%")
+            assert schedule_request_dto.task_name == "task1"
 
-    def test_check_queue_name_invalid_characters(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            with pytest.raises(
-                ValueError, match=re.escape("Queue name contains URL-unsafe characters")
-            ):
-                dto.ScheduleRequestDTO(
-                    task_name=self.VALID_TASK_NAME, queue_name=self.INVALID_QUEUE_NAME
+    def test_task_name_not_ok(self, mock_settings):
+        """Test task_name."""
+
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            # Raise ValueError for unknown task
+            with pytest.raises(ValueError, match="Task task3 is not registered"):
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task3",
                 )
 
-    def test_check_queue_name_not_registered(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
+            # Raise ValueError for un-discoverable task
             with pytest.raises(
-                ValueError, match="Queue does_not_exist_queue is not registered"
+                ValueError, match="Registered task task2 is not discoverable"
             ):
-                dto.ScheduleRequestDTO(
-                    task_name=self.VALID_TASK_NAME,
-                    queue_name=self.DOES_NOT_EXIST_QUEUE_NAME,
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task2",
                 )
 
-    def test_check_when_and_cron_valid(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            request = dto.ScheduleRequestDTO(
-                task_name=self.VALID_TASK_NAME, when=self.VALID_DATETIME
-            )
-            assert request.when == self.VALID_DATETIME
+    def test_datetimes_ok(self, mock_settings):
+        """Test datetimes."""
 
-            request = dto.ScheduleRequestDTO(
-                task_name=self.VALID_TASK_NAME, cron=self.VALID_CRON
-            )
-            assert request.cron == self.VALID_CRON
+        stack = ExitStack()
+        stack.enter_context(
+            patch("backtick.dto.utils.discover_task", return_value=lambda: None)
+        )
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
 
-    def test_check_when_and_cron_both_specified(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            with pytest.raises(ValueError, match="Cannot set both when and cron"):
-                dto.ScheduleRequestDTO(
-                    task_name=self.VALID_TASK_NAME,
-                    when=self.VALID_DATETIME,
-                    cron=self.VALID_CRON,
+        with stack:
+            dt1 = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+                days=1
+            )
+            dt2 = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+                days=2
+            )
+            schedule_request_dto = dto.ScheduleRequestDTO(
+                task_name="task1",
+                datetimes=[dt1, dt2],
+            )
+            assert schedule_request_dto.datetimes == [dt1, dt2]
+
+    def test_datetimes_not_ok(self, mock_settings):
+        """Test datetimes."""
+
+        stack = ExitStack()
+        stack.enter_context(
+            patch("backtick.dto.utils.discover_task", return_value=lambda: None)
+        )
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            dt1 = datetime.datetime.now(tz=datetime.timezone.utc) - datetime.timedelta(
+                days=1
+            )
+
+            # Raise ValueError for past datetime
+            with pytest.raises(ValueError, match="Datetime .* is in the past"):
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task1",
+                    datetimes=[dt1],
                 )
 
-    def test_check_kwargs_match_task_kwargs_valid(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            request = dto.ScheduleRequestDTO(
-                task_name="task1", kwargs=self.VALID_KWARGS
+            # Raise ValueError for datetime more than a month in the future
+            dt2 = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+                days=31
             )
-            assert request.kwargs == self.VALID_KWARGS
+            with pytest.raises(
+                ValueError, match="Datetime .* is more than a month in the future"
+            ):
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task1",
+                    datetimes=[dt2],
+                )
 
-        with patch("backtick.dto.settings", mock_settings):
-            with pytest.raises(ValueError, match="Task task2 is not keyword only"):
-                dto.ScheduleRequestDTO(task_name="task2", kwargs=self.VALID_KWARGS)
+            # Raise ValueError for datetime not in UTC
+            tz = zoneinfo.ZoneInfo("Europe/Amsterdam")
+            dt3 = datetime.datetime.now(tz=tz) + datetime.timedelta(days=1)
+            with pytest.raises(ValueError, match="Datetime must be in UTC .* format"):
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task1",
+                    datetimes=[dt3],
+                )
 
-    def test_check_kwargs_match_task_kwargs_invalid_kwargs(self, mock_settings):
-        with patch("backtick.dto.settings", mock_settings):
-            with pytest.raises(ValueError, match="Kwargs do not match task1 kwargs"):
-                dto.ScheduleRequestDTO(task_name="task1", kwargs=self.INVALID_KWARGS)
+    def test_task_is_keyword_only(self, mock_settings):
+        """Test kwargs."""
+
+        stack = ExitStack()
+        stack.enter_context(
+            patch("backtick.dto.utils.discover_task", return_value=lambda a, b: None)
+        )
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            # Test task is keyword-only
+            with pytest.raises(ValueError, match="Task task1 is not keyword only"):
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task1",
+                    kwargs={"a": "foo", "b": "bar"},
+                )
+
+    def test_task_kwargs_match_incoming_kwargs(self, mock_settings):
+        """Test kwargs."""
+
+        stack = ExitStack()
+        stack.enter_context(
+            patch("backtick.dto.utils.discover_task", return_value=lambda a, b: None)
+        )
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            # Test kwargs match incoming kwargs
+            with pytest.raises(ValueError, match="Task task1 is not keyword only "):
+                _ = dto.ScheduleRequestDTO(
+                    task_name="task1",
+                    kwargs={"a": "foo"},
+                )
 
 
 class TestScheduleResponseDTO:
-    def test_task_id(self):
-        response = dto.ScheduleResponseDTO(
-            task_id="task_id", message="message", next_run=None
-        )
-        assert response.task_id == "task_id"
+    def test_required_fields(self, mock_settings):
+        """Test required fields."""
 
-    def test_message(self):
-        response = dto.ScheduleResponseDTO(task_id="task_id", message="message")
-        assert response.message == "message"
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
 
-    def test_next_run(self):
-        next_run = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        response = dto.ScheduleResponseDTO(
-            task_id="task_id", message="message", next_run=next_run
-        )
-        assert response.next_run == next_run
+        with stack:
+            with pytest.raises(ValueError, match="field required"):
+                _ = dto.ScheduleResponseDTO(
+                    message="message",
+                )
+
+            with pytest.raises(ValueError, match="field required"):
+                _ = dto.ScheduleResponseDTO(
+                    task_ids=["task1", "task2"],
+                )
+
+    def test_task_ids(self, mock_settings):
+        """Test task_ids."""
+
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            schedule_response_dto = dto.ScheduleResponseDTO(
+                task_ids=["task1", "task2"],
+                message="message",
+            )
+            assert schedule_response_dto.task_ids == ["task1", "task2"]
+
+    def test_message(self, mock_settings):
+        """Test message."""
+
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            schedule_response_dto = dto.ScheduleResponseDTO(
+                task_ids=["task1", "task2"],
+                message="message",
+            )
+            assert schedule_response_dto.message == "message"
 
 
 class TestUnscheduleRequestDTO:
-    def test_task_id(self):
-        request = dto.UnscheduleRequestDTO(task_id="task_id")
-        assert request.task_id == "task_id"
+    def test_required_fields(self, mock_settings):
+        """Test required fields."""
+
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            with pytest.raises(ValueError, match="field required"):
+                _ = dto.UnscheduleRequestDTO(
+                    task_ids=["task1", "task2"],
+                )
+
+            with pytest.raises(ValueError, match="field required"):
+                _ = dto.UnscheduleRequestDTO(
+                    enqueue_dependents=True,
+                )
+
+    def test_task_ids(self, mock_settings):
+        """Test task_ids."""
+
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            unschedule_request_dto = dto.UnscheduleRequestDTO(
+                task_ids=["task1", "task2"],
+                enqueue_dependents=True,
+            )
+            assert unschedule_request_dto.task_ids == ["task1", "task2"]
+
+    def test_enqueue_dependents(self, mock_settings):
+        """Test message."""
+
+        stack = ExitStack()
+        stack.enter_context(patch("backtick.dto.settings", mock_settings))
+
+        with stack:
+            unschedule_request_dto = dto.UnscheduleRequestDTO(
+                task_ids=["task1", "task2"],
+                enqueue_dependents=True,
+            )
+            assert unschedule_request_dto.enqueue_dependents is True
+
+
+TestUnscheduleResponseDTO = TestScheduleResponseDTO

@@ -14,6 +14,7 @@ services:
       - .env
     build:
       context: ./
+      dockerfile: Dockerfile.test
     volumes:
       - ".:/code"
     entrypoint:
@@ -33,8 +34,20 @@ services:
       - .env
     build:
       context: ./
+      dockerfile: Dockerfile.test
     volumes:
       - ".:/code"
     entrypoint: python -m backtick.worker --with-scheduler
     depends_on:
       - redis
+
+  test:
+    restart: unless-stopped
+    env_file:
+      - .env
+    build:
+      context: ./
+      dockerfile: Dockerfile.test
+    volumes:
+      - ".:/code"
+    entrypoint: tail -f /dev/null
