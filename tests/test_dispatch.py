@@ -1,9 +1,11 @@
+import time
 from unittest.mock import patch
 
-from backtick import dispatch, utils
-import rq
-import time
 import pytest
+import rq
+
+from backtick import dispatch, utils
+
 
 class FakeScheduleRequestDTO:
     def __init__(self, task_name, datetimes=None, kwargs=None):
@@ -17,7 +19,7 @@ def vanilla_task():
     return "result"
 
 
-@pytest.mark.integration
+@pytest.mark.integration()
 @patch("backtick.dispatch.utils.discover_task", new=lambda _: vanilla_task)
 def test_submit_tasks_ok(mock_settings):
     with patch("backtick.dispatch.settings", mock_settings):
