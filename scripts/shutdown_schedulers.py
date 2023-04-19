@@ -1,1 +1,0 @@
-"""Shutdown all the schedulers."""
