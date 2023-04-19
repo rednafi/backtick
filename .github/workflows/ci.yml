@@ -51,23 +51,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: actions/setup-python@v4
-        id: cp311
-        with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: |
-            **/requirements*.txt
+      - name: Start the dev container
+        run: |
+          echo "Starting the dev container..."
+          make test-up
+
+      - name: Wait for the dev container to be ready
+        run: |
+          echo "Waiting for the dev container to be ready..."
+          sleep 5
 
       - run: |
           echo "Cache hit: ${{ steps.cp311.outputs.cache-hit }}"
-
-      - name: Install the dependencies
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run unit tests
         run: |
           echo "Running the unit tests..."
           make test-unit
+
+      - name: Stop the dev container
+        run: |
+          echo "Stop the dev container..."
+          make test-down
