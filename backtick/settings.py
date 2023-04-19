@@ -2,7 +2,11 @@ import os
 
 import dotenv
 
-dotenv.load_dotenv()
+found = dotenv.load_dotenv(".env")
+
+if not found:  # pragma: no cover
+    dotenv.load_dotenv(".env.sample")
+
 
 BACKTICK_REDIS_URL = os.environ["BACKTICK_REDIS_URL"]
 
