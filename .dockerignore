@@ -4,7 +4,7 @@ __pycache__
 *.pyd
 .Python
 *.env
-.sample.env
+.env.sample
 pip-log.txt
 pip-delete-this-directory.txt
 .tox
