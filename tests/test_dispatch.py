@@ -9,10 +9,20 @@ from backtick import dispatch, utils
 
 
 class FakeScheduleRequestDTO:
+    """ScheduleRequestDTO without validaiton."""
+
     def __init__(self, task_name, datetimes=None, kwargs=None):
         self.task_name = task_name
         self.datetimes = datetimes
         self.kwargs = kwargs
+
+
+class FakeUnscheduleRequestDTO:
+    """UnscheduleRequestDTO without validaiton."""
+
+    def __init__(self, task_ids, enqueue_dependents):
+        self.task_ids = task_ids
+        self.enqueue_dependents = enqueue_dependents
 
 
 @utils.task("default", utils.get_redis())
@@ -177,3 +187,35 @@ def test_submit_scheduled_tasks_retry(mock_settings):
         time.sleep(1)
         assert task.retries_left == 3
         assert task.retry_intervals == [1, 2, 3]
+
+
+@pytest.mark.integration()
+@patch("backtick.dispatch.utils.discover_task", new=lambda _: task_retry)
+def test_cancelled_tasks(mock_settings):
+    with patch("backtick.dispatch.settings", mock_settings):
+        dt = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
+            seconds=5
+        )
+        response = dispatch.submit_tasks(
+            schedule_request_dto=FakeScheduleRequestDTO(
+                task_name="task1",
+                datetimes=[dt],
+                kwargs={},
+            )
+        )
+
+        task_id = response.task_ids[0]
+
+        # Cancel the task
+        dispatch.cancel_tasks(
+            unschedule_request_dto=FakeUnscheduleRequestDTO(
+                task_ids=[task_id], enqueue_dependents=True
+            ),
+        )
+        time.sleep(1)
+
+        # Check that the task was is now in cancelled job registry
+        connection = utils.get_redis()
+        queue = rq.Queue(connection=connection)
+        registry = rq.registry.CanceledJobRegistry(queue=queue)
+        assert task_id in registry.get_job_ids()
