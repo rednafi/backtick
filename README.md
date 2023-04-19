@@ -1,5 +1,6 @@
 # backtick
-A reliable little rpc task scheduling app built on top of rq &amp; rq-scheduler
+
+A little fixed-point task scheduling app built on top of rq
 
 ## Work in progress
 

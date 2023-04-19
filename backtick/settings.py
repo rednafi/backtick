@@ -2,9 +2,7 @@ import os
 
 import dotenv
 
-found = dotenv.load_dotenv(".env")
-
-if not found:  # pragma: no cover
+if not (found := dotenv.load_dotenv()):  # pragma: no cover
     dotenv.load_dotenv(".env.sample")
 
 
