@@ -1,4 +1,4 @@
-name: Run tests & publish image to Dockerhub
+name: CI
 
 on:
   push:
@@ -70,4 +70,4 @@ jobs:
       - name: Run unit tests
         run: |
           echo "Running the unit tests..."
-          make unit-test
+          make test-unit
