@@ -61,13 +61,13 @@ test: ## Run the tests against the current version of Python.
 	docker compose exec test pytest -v -s
 
 
-.PHONY: test_integration
-test_integration: ## Run the integration tests against the current version of Python.
+.PHONY: test-integration
+test-integration: ## Run the integration tests against the current version of Python.
 	docker compose exec test pytest -v -s -m integration
 
 
-.PHONY: test_unit
-test_unit: ## Run the unit tests against the current version of Python.
+.PHONY: test-unit
+test-unit: ## Run the unit tests against the current version of Python.
 	docker compose exec test pytest -v -s -m 'not integration'
 
 
@@ -81,13 +81,13 @@ down: ## Stop the development environment.
 	docker compose down
 
 
-.PHONY: test_up
-test_up: ## Start the integration test environment.
+.PHONY: test-up
+test-up: ## Start the integration test environment.
 	docker compose -f docker-compose-test.yml up -d
 
 
-.PHONY: test_down
-test_down: ## Stop the integration test environment.
+.PHONY: test-down
+test-down: ## Stop the integration test environment.
 	docker compose -f docker-compose-test.yml down
 
 
