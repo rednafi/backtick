@@ -7,11 +7,13 @@ services:
       - "6379:6379"
     volumes:
       - "./.redis_data:/data"
+    env_file:
+      - .sample.env
 
   web:
     restart: unless-stopped
     env_file:
-      - .env.sample
+      - .sample.env
     build:
       context: ./
       dockerfile: Dockerfile.test
@@ -31,7 +33,7 @@ services:
   worker:
     restart: unless-stopped
     env_file:
-      - .env.sample
+      - .sample.env
     build:
       context: ./
       dockerfile: Dockerfile.test
@@ -44,7 +46,7 @@ services:
   test:
     restart: unless-stopped
     env_file:
-      - .env.sample
+      - .sample.env
     build:
       context: ./
       dockerfile: Dockerfile.test

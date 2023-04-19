@@ -61,13 +61,35 @@ jobs:
           echo "Waiting for the dev container to be ready..."
           sleep 5
 
-      - run: |
-          echo "Cache hit: ${{ steps.cp311.outputs.cache-hit }}"
-
       - name: Run unit tests
         run: |
           echo "Running the unit tests..."
           make test-unit
+
+      - name: Stop the dev container
+        run: |
+          echo "Stop the dev container..."
+          make test-down
+
+  integration-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Start the dev container
+        run: |
+          echo "Starting the dev container..."
+          make test-up
+
+      - name: Wait for the dev container to be ready
+        run: |
+          echo "Waiting for the dev container to be ready..."
+          sleep 5
+
+      - name: Run integration tests
+        run: |
+          echo "Running the unit tests..."
+          make test-integration
 
       - name: Stop the dev container
         run: |

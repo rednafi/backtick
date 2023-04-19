@@ -58,17 +58,17 @@ help: ## Show this help message.
 
 .PHONY: test
 test: ## Run the tests against the current version of Python.
-	docker compose exec test pytest -v -s
+	docker compose -f docker-compose-test.yml exec test pytest -v -s
 
 
 .PHONY: test-integration
 test-integration: ## Run the integration tests against the current version of Python.
-	docker compose exec test pytest -v -s -m integration
+	docker compose -f docker-compose-test.yml exec test pytest -v -s -m integration
 
 
 .PHONY: test-unit
 test-unit: ## Run the unit tests against the current version of Python.
-	docker compose exec test pytest -v -s -m 'not integration'
+	docker compose -f docker-compose-test.yml exec test pytest -v -s -m 'not integration'
 
 
 .PHONY: up

@@ -2,12 +2,11 @@ import os
 
 import dotenv
 
-if not (found := dotenv.load_dotenv()):  # pragma: no cover
-    dotenv.load_dotenv(".env.sample")
+if not dotenv.load_dotenv(".env"):  # pragma: no cover
+    dotenv.load_dotenv(".sample.env")
 
 
 BACKTICK_REDIS_URL = os.environ["BACKTICK_REDIS_URL"]
-
 BACKTICK_LOG_LEVEL = os.environ["BACKTICK_LOG_LEVEL"]
 
 
