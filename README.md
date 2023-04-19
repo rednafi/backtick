@@ -72,9 +72,11 @@ WIP...
 
 WIP...
 
-## Limitations
+## Running the tests
 
 WIP...
+
+## Limitations
 
 [rq-badge]: https://img.shields.io/badge/rq-red?style=for-the-badge
 [fastapi-badge]: https://img.shields.io/badge/fastapi-teal?style=for-the-badge
