@@ -71,6 +71,26 @@ test_unit: ## Run the unit tests against the current version of Python.
 	docker compose exec test pytest -v -s -m 'not integration'
 
 
+.PHONY: up
+up: ## Start the development environment.
+	docker compose up -d
+
+
+.PHONY: down
+down: ## Stop the development environment.
+	docker compose down
+
+
+.PHONY: test_up
+test_up: ## Start the integration test environment.
+	docker compose -f docker-compose-test.yml up -d
+
+
+.PHONY: test_down
+test_down: ## Stop the integration test environment.
+	docker compose -f docker-compose-test.yml down
+
+
 .PHONY: dep-lock
 dep-lock: ## Freeze deps in 'requirements.txt' file.
 	@pip-compile \
