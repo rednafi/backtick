@@ -67,23 +67,40 @@ def get_redis() -> redis.Redis:
     return _cache["r"]
 
 
-def discover_task(name: str) -> Callable[..., Any]:
-    parts = name.split(".")
-    module_name = ".".join(parts[:-1])
-    function_name = parts[-1]
-    module = None
-    for i in range(len(parts) - 1, -1, -1):
-        try:
-            module_name = ".".join(parts[:i])
-            module = importlib.import_module(module_name)
-        except ModuleNotFoundError:
-            pass
-        else:
-            break
-    if module is None:
-        raise ImportError(f"No module found for symbol name '{name}'")
-    function = getattr(module, function_name)
-    return function
+def discover_task(qualname: str) -> Callable[..., Any]:
+    """
+    Finds a function decorated with the @task decorator with the given fully-qualified
+    name (e.g., 'my_module.my_function') and returns it. If no such function exists or
+    there is an import error, raises an appropriate exception.
+    """
+    parts = qualname.split(".")
+    mod_name = ".".join(parts[:-1])
+    func_name = parts[-1]
+
+    if not mod_name or not func_name:
+        raise ValueError(
+            f"Invalid fully qualified name: {qualname}. Must be of the form 'module.function'"
+        )
+
+    try:
+        module = importlib.import_module(mod_name)
+    except ModuleNotFoundError as e:
+        raise ImportError(f"Failed to import module {mod_name}: {e}") from e
+
+    if not (func := getattr(module, func_name, None)):
+        raise ValueError(
+            f"Callable {func_name} not found in module {mod_name}"
+        ) from None
+
+    if not (inspect.isfunction(func) or hasattr(func, "__call__")):
+        raise TypeError(f"Object {func_name} is not a callable")
+
+    if not getattr(func, "_is_task", None):
+        raise ValueError(
+            f"Callable {func_name} is not decorated with the @task decorator"
+        )
+
+    return func
 
 
 class task:  # noqa
@@ -136,5 +153,6 @@ class task:  # noqa
         f.on_success = self.on_success  # type: ignore
         f.on_failure = self.on_failure  # type: ignore
         f.queue_class = self.queue_class  # type: ignore
+        f._is_task = True  # type: ignore
 
         return f

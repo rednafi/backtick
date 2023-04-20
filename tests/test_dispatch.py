@@ -140,7 +140,7 @@ def test_submit_scheduled_tasks_ok(mock_settings):
 def test_submit_scheduled_tasks_error(mock_settings):
     with patch("backtick.dispatch.settings", mock_settings):
         dt = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
-            seconds=5
+            seconds=3
         )
         response = dispatch.submit_tasks(
             schedule_request_dto=FakeScheduleRequestDTO(

@@ -178,3 +178,65 @@ def test_task():
     assert foo_task.on_success == expected_on_success
     assert foo_task.on_failure == expected_on_failure
     assert foo_task.queue_class == rq.Queue
+
+
+##########################################
+# Test discover_task
+##########################################
+
+
+# Define a dummy @task decorator for testing purposes
+def task(func):
+    func._is_task = True
+    return func
+
+
+# Define some test functions to use with the @task decorator
+@task
+def test_func_1():
+    pass
+
+
+def test_func_2():
+    pass
+
+
+@task
+class TestClass:
+    def __call__(self):
+        pass
+
+
+# Define the tests for the discover_task function
+def test_discover_task_valid_qualname():
+    # Test with a valid fully-qualified function name
+    assert utils.discover_task("tests.test_utils.test_func_1") == test_func_1
+
+
+def test_discover_task_invalid_qualname():
+    # Test with an invalid fully-qualified function name
+    with pytest.raises(
+        ValueError,
+        match="Callable invalid_func_name not found in module tests.test_utils",
+    ):
+        utils.discover_task("tests.test_utils.invalid_func_name")
+
+
+def test_discover_task_import_error():
+    # Test with a module that can't be imported
+    with pytest.raises(ImportError, match="No module named 'nonexistent_module'"):
+        utils.discover_task("nonexistent_module.test_function")
+
+
+def test_discover_task_not_decorated_task():
+    # Test with a callable object that is not decorated with the @task decorator
+    with pytest.raises(
+        ValueError,
+        match="Callable test_func_2 is not decorated with the @task decorator",
+    ):
+        utils.discover_task("tests.test_utils.test_func_2")
+
+
+def test_discover_task_class():
+    # Test with a class that is decorated with the @task decorator
+    assert utils.discover_task("tests.test_utils.TestClass") == TestClass

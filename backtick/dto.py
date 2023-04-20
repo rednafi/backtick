@@ -40,6 +40,12 @@ class ScheduleRequestDTO(BaseModel):
         if not v:
             return v
 
+        # Check if datetimes are utc
+        if v.tzinfo != datetime.timezone.utc:
+            raise ValueError(
+                "Datetime must be in UTC YYYY-MM-DDTHH:MM:SS+00:00 / YYYY-MM-DDTHH:MM:SSZ format"
+            )
+
         if v < datetime.datetime.now(tz=datetime.timezone.utc):
             raise ValueError(f"Datetime {v} is in the past")
 
@@ -48,12 +54,6 @@ class ScheduleRequestDTO(BaseModel):
             days=30
         ):
             raise ValueError(f"Datetime {v} is more than a month in the future")
-
-        # Check if datetimes are utc
-        if v.tzinfo != datetime.timezone.utc:
-            raise ValueError(
-                "Datetime must be in UTC YYYY-MM-DDTHH:MM:SS+00:00 / YYYY-MM-DDTHH:MM:SSZ format"
-            )
         return v
 
 
