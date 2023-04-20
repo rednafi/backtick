@@ -26,7 +26,7 @@ While working on a Django project at my workplace, we needed a way to call async
 tasks at future datetimes. We didn't need any periodic scheduling or cron support.
 Naturally, we went for Celery's `task.apply_async(at=<datetime>)` function but that
 suffers from one major gotcha: it keeps the schedule logs in memory and loses the
-scheduled tasks whenever the worker is restarted. This also causes a situation where
+scheduled tasks whenever the workers are restarted. This also causes a situation where
 future task cancellation doesn't work if the worker loses its working memory.
 
 To avoid this, Celery doc recommends propping up a persistent worker that'll save the
