@@ -39,7 +39,7 @@ def raise_exception() -> None:
     """Raise an exception.
 
     Args:
-        schedule_dto (dto.ScheduleRequestDTO): The schedule dto.
+        None
 
     Returns:
         None
