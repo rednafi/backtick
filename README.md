@@ -27,7 +27,7 @@ tasks at future datetimes. We didn't need any periodic scheduling or cron suppor
 Naturally, we went for Celery's `task.apply_async(at=<datetime>)` function but that
 suffers from one major gotcha: it keeps the schedule logs in memory and loses the
 scheduled tasks whenever the workers are restarted. This also causes a situation where
-future task cancellation doesn't work if the worker loses its working memory.
+future task cancellation doesn't work if the associated workers lose their working memory.
 
 To avoid this, Celery doc recommends propping up a persistent worker that'll save the
 worker state in a file on the disk. This whole setup feels janky and goes against the
