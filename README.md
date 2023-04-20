@@ -31,8 +31,8 @@ future task cancellation doesn't work if the worker loses its working memory.
 
 To avoid this, Celery doc recommends propping up a persistent worker that'll save the
 worker state in a file on the disk. This whole setup feels janky and goes against the
-philosophy of keeping the workers stateless and being able to redeploy the workers
-without losing any task.
+philosophy of keeping the workers stateless and being able to redeploy them without
+losing any task.
 
 So this prototype demonstrates an app where you'll be able to register any background
 task, schedule and cancel it with HTTP calls and it'll work reliably even if you've to
@@ -168,7 +168,52 @@ dependent tasks. Calling the endpoint will give you the following response:
 
 ### Registering new tasks
 
-WIP...
+So far, we've only seen how to invoke and cancel pre-registered tasks but this section
+will talk about how you can register and run your own tasks. Tasks are any Python
+callable that's decorated with the `@utils.tasks` decorator. In the `backtick.tasks`
+module, you'll be able to see the `do_something` task that we've seen so far:
+
+```python
+# tasks.py
+
+import logging
+import time
+
+from . import utils
+
+
+@utils.task(
+    queue=settings.BACKTICK_QUEUES["default"],
+    connection=utils.get_redis(),
+    timeout=60,
+    result_ttl=60,
+)
+def do_something(*, how_long: int) -> None:
+    """Do something for a while.
+
+    Args:
+        how_long (int): How long to do something for.
+
+    Returns:
+        None
+    """
+    logging.info("Starting to do something")
+    time.sleep(how_long)
+    logging.info("Finished doing something")
+```
+
+The `utils.task` decorator accepts all the arguments accepted by the
+[rq.decorators.job`][rq-job-decorator] decorator. Once the task has been defined, it
+needs to be included to the `BACKTICK_TASKS` dict on the `backtick.settings` module.
+
+```python
+BACKTICK_TASKS = {
+    "do_something": "backtick.tasks.do_something" # fully qualified task name
+}
+```
+
+On the `POST /schedule` endpoint, the `task_name` field will refer to a key in this
+task mapping.
 
 ### Working with dependent tasks
 
@@ -184,11 +229,26 @@ WIP...
 
 ### Shutting down the workers
 
-WIP...
+Backtick provides a management script that allows you to gracefully shut down all the
+workers. Running the script will make the workers wait until the currently running task
+is finished, and then the associated worker processes will be cleaned up. Here's the
+command to stop the workers:
+
+```
+make stop-workers
+```
 
 ### Cancelling the running tasks
 
-WIP...
+To cancel the currently, running tasks, execute:
+
+```
+make cancel-running-tasks
+```
+
+### Cancelling all scheduled tasks
+
+Run `make cancel-scheduled-tasks` to cancel all the future scheduled tasks.
 
 ## Tests
 
@@ -226,3 +286,5 @@ is required to give the database enough time to be ready.
 [api-doc]: https://user-images.githubusercontent.com/30027932/233474567-b3850504-eaf1-41c5-a70a-013da9cca412.png
 [api-doc-eager-tasks-a]: https://user-images.githubusercontent.com/30027932/233481702-f6a6dbfd-cebf-4e27-b4a2-377a2f85c84f.png
 [api-doc-eager-tasks-b]: https://user-images.githubusercontent.com/30027932/233484001-0258fbca-8d4f-47ad-8efc-8adf462b1e8e.png
+
+[rq-job-decorator]: https://python-rq.org/docs/#the-job-decorator

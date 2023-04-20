@@ -18,7 +18,7 @@ def do_something(*, how_long: int) -> None:
     """Do something for a while.
 
     Args:
-        schedule_dto (dto.ScheduleRequestDTO): The schedule dto.
+        how_long (int): How long to do something for.
 
     Returns:
         None
