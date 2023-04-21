@@ -34,8 +34,8 @@ worker state in a file on the disk. This whole setup feels janky and goes agains
 philosophy of keeping the workers stateless and being able to redeploy them without
 losing any task.
 
-So this prototype demonstrates an app where you'll be able to register any background
-task, schedule and cancel it with HTTP calls and it'll work reliably even if you've to
+So this prototype demonstrates a service that allows you to register any background
+task, schedule and cancel it with HTTP calls, and it'll work reliably even if you have to
 restart the workers for deployment. For simplicity's sake, `backtick` keeps the
 scheduling logs in the Redis broker.
 
