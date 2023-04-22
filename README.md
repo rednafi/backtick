@@ -481,6 +481,13 @@ is required to give the database enough time to be ready.
 
 ## Limitations
 
+* Backtick currently doesn't support cron based periodic task scheduling. I had a hard
+time building reliable cron scheduling with `rq-scheduler`. This is something I'm still
+exploring.
+
+* It doesn't support dependent task scheduling. I'm still working on a suitable way to
+build that feature so that it works with the existing `/schedule` endpoint.
+
 [rq-badge]: https://img.shields.io/badge/rq-red?style=for-the-badge
 [fastapi-badge]: https://img.shields.io/badge/fastapi-teal?style=for-the-badge
 [pytest-badge]: https://img.shields.io/badge/pytest-blue?style=for-the-badge
