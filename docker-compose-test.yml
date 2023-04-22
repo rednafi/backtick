@@ -41,6 +41,7 @@ services:
       - ".:/code"
     entrypoint: python -m backtick.worker --with-scheduler
     depends_on:
+      - web
       - redis
 
   test:

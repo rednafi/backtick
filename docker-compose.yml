@@ -1,7 +1,6 @@
 services:
   redis:
     image: "redis:alpine"
-    command: redis-server --appendonly yes
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -35,6 +34,9 @@ services:
       context: ./
     volumes:
       - ".:/code"
+    environment:
+      - PYTHONPATH=/code
     entrypoint: python -m backtick.worker --with-scheduler
     depends_on:
+      - web
       - redis

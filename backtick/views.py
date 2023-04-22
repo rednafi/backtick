@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 
-from . import dispatch, dto
+from backtick import dispatch, dto
 
 app = FastAPI()
 

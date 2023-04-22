@@ -24,15 +24,16 @@ task by calling another endpoint.
 
 While working on a Django project at my workplace, we needed a way to call asynchronous
 tasks at future datetimes. We didn't need any periodic scheduling or cron support.
-Naturally, we went for Celery's `task.apply_async(at=<datetime>)` function but that
-suffers from one major gotcha: it keeps the schedule logs in memory and loses the
+Naturally, we went for [Celery's][celery] `task.apply_async(at=<datetime>)` function but
+that suffers from one major gotcha: it keeps the schedule logs in memory and loses the
 scheduled tasks whenever the workers are restarted. This also causes a situation where
-future task cancellation doesn't work if the associated workers lose their working memory.
+future task cancellation doesn't work if the associated workers lose their working
+memory.
 
-To avoid this, Celery doc recommends propping up a persistent worker that'll save the
-worker state in a file on the disk. This whole setup feels janky and goes against the
-philosophy of keeping the workers stateless and being able to redeploy them without
-losing any task.
+To avoid this, Celery doc recommends creating a [persistent worker][persistent-worker]
+that'll save the worker state in a file on the disk. This whole setup feels janky and
+goes against the philosophy of keeping the workers stateless and being able to redeploy
+them without losing any task.
 
 So this prototype demonstrates a service that allows you to register any background
 task, schedule and cancel it with HTTP calls, and it'll work reliably even if you have to
@@ -174,7 +175,7 @@ callable that's decorated with the `@utils.tasks` decorator. In the `backtick.ta
 module, you'll be able to see the `do_something` task that we've seen so far:
 
 ```python
-# tasks.py
+# backtick/tasks.py
 
 import logging
 import time
@@ -203,10 +204,12 @@ def do_something(*, how_long: int) -> None:
 ```
 
 The `utils.task` decorator accepts all the arguments accepted by the
-[rq.decorators.job`][rq-job-decorator] decorator. Once the task has been defined, it
+[rq.decorators.job][rq-job-decorator] decorator. Once the task has been defined, it
 needs to be included to the `BACKTICK_TASKS` dict on the `backtick.settings` module.
 
 ```python
+# backtick/settings.py
+
 BACKTICK_TASKS = {
     "do_something": "backtick.tasks.do_something" # fully qualified task name
 }
@@ -215,17 +218,215 @@ BACKTICK_TASKS = {
 On the `POST /schedule` endpoint, the `task_name` field will refer to a key in this
 task mapping.
 
-### Working with dependent tasks
-
-WIP...
-
 ### Retrying failed tasks
 
-WIP...
+You can retry tasks upon failure by taking advantage of rq's `Retry` option. To do so,
+a task has to be defined like this:
+
+```python
+# backtick/tasks.py
+
+from rq import Retry
+
+from . import settings, utils
+
+
+@utils.task(
+    queue=settings.BACKTICK_QUEUES["default"],
+    connection=utils.get_redis(),
+    retry=Retry(max=3, interval=2),
+    timeout=60,
+    result_ttl=60,
+)
+def raise_exception() -> None:
+    """Raise an exception.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+
+    # This just raises an exception to trigger retry logic.
+    raise ValueError("This is an exception")
+```
+
+You'll have to register the task before you can call the `/schedule` endpoint:
+
+```python
+# backtick/settings.py
+
+BACKTICK_TASKS = {
+    "raise_exception": "backtick.tasks.raise_exception"
+}
+```
+
+Now, you can make a request to the endpoint to schedule an immediate or a future task;
+in either case, the underlying task will raise a value error and rq will retry it 3
+times with 2 seconds of interval in between each call.
+
+```sh
+curl -X 'POST' \
+  'http://localhost:5000/schedule' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "task_name": "raise_exception",
+  "datetimes": [],
+  "kwargs": {}
+}'
+```
+
+If you check the worker logs, you'll see that the task has been retried 3 times after
+the first failed call with 2 seconds of interval between them.
+
+<details>
+  <summary>Worker log</summary>
+
+  ```
+  backtick-web-1     | INFO:root:Task 35bfdfb4-a6ff-41db-8420-3e672b81c046 scheduled
+  backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | Traceback (most recent call last):
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |     rv = job.perform()
+  backtick-worker-1  |          ^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |     self._result = self._execute()
+  backtick-worker-1  |                    ^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
+  backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
+  backtick-worker-1  |     raise ValueError("This is an exception")
+  backtick-worker-1  | ValueError: This is an exception
+  backtick-worker-1  |
+  backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | Traceback (most recent call last):
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |     rv = job.perform()
+  backtick-worker-1  |          ^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |     self._result = self._execute()
+  backtick-worker-1  |                    ^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
+  backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
+  backtick-worker-1  |     raise ValueError("This is an exception")
+  backtick-worker-1  | ValueError: This is an exception
+  backtick-worker-1  |
+  backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | Traceback (most recent call last):
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |     rv = job.perform()
+  backtick-worker-1  |          ^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |     self._result = self._execute()
+  backtick-worker-1  |                    ^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
+  backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
+  backtick-worker-1  |     raise ValueError("This is an exception")
+  backtick-worker-1  | ValueError: This is an exception
+  backtick-worker-1  |
+  backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | Traceback (most recent call last):
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |     rv = job.perform()
+  backtick-worker-1  |          ^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |     self._result = self._execute()
+  backtick-worker-1  |                    ^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
+  backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
+  backtick-worker-1  |     raise ValueError("This is an exception")
+  backtick-worker-1  | ValueError: This is an exception
+  backtick-worker-1  |
+  ```
+
+</details>
+
+### Retrying tasks with exponential backoff
+
+You can define a task as follows to employ exponential backoff in your retry logic:
+
+```python
+# backtick/tasks.py
+from rq import Retry
+
+from . import settings, utils
+
+# This will retry the raise_exception function in 2^1, 2^2, 2^3 seconds.
+interval_with_backoff = [2**i for i in range(1, 4)]
+
+@utils.task(
+    queue=settings.BACKTICK_QUEUES["default"],
+    connection=utils.get_redis(),
+    retry=Retry(max=len(interval_with_backoff), interval=interval_with_backoff),
+    timeout=60,
+    result_ttl=60,
+)
+def raise_exception() -> None:
+    """Raise an exception. The task will be retried with exponential backoff.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    raise ValueError("This is an exception")
+```
 
 ### Attaching callbacks to the tasks
 
-WIP...
+If you need to attach rq's `on_success` or `on_failure` callbacks, you can do that like
+this:
+
+```python
+
+interval_with_backoff = [2**i for i in range(3)]
+
+
+def on_success_callback(*args: Any, **kwargs: Any) -> None:
+    logging.info("From on_success callback!")
+
+
+def on_failure_callback(*args: Any, **kwargs: Any) -> None:
+    logging.error("From on_failure callback!")
+
+
+@utils.task(
+    queue=settings.BACKTICK_QUEUES["default"],
+    connection=utils.get_redis(),
+    retry=Retry(max=len(interval_with_backoff), interval=interval_with_backoff),
+    timeout=60,
+    result_ttl=60,
+    on_success=on_success_callback,
+    on_failure=on_failure_callback,
+)
+def raise_exception() -> None:
+    """Raise an exception. Here, on_failure will be called
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    raise ValueError("This is an exception")
+```
+
+Just make sure that the callbacks aren't lambda functions since `rq` doesn't support
+lambda callbacks.
 
 ### Shutting down the workers
 
@@ -280,6 +481,9 @@ is required to give the database enough time to be ready.
 [rq-badge]: https://img.shields.io/badge/rq-red?style=for-the-badge
 [fastapi-badge]: https://img.shields.io/badge/fastapi-teal?style=for-the-badge
 [pytest-badge]: https://img.shields.io/badge/pytest-blue?style=for-the-badge
+
+[celery]: https://docs.celeryq.dev/en/stable/
+[persistent-worker]: https://docs.celeryq.dev/en/stable/userguide/workers.html#persistent-revokes
 [docker]: https://www.docker.com/
 [docker-compose]: https://docs.docker.com/compose/compose-v2/
 

@@ -4,7 +4,7 @@ from typing import cast
 import rq
 import rq.exceptions
 
-from . import dto, settings, utils
+from backtick import dto, settings, utils
 
 
 def submit_tasks(

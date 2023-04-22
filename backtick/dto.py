@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, root_validator, validator
 
-from . import settings, utils
+from backtick import settings, utils
 
 
 class ScheduleRequestDTO(BaseModel):

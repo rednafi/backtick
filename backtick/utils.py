@@ -9,7 +9,7 @@ from rq.job import Retry
 from rq.queue import Queue
 from rq.utils import backend_class
 
-from . import settings
+from backtick import settings
 
 _cache = {}
 

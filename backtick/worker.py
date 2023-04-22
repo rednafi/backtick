@@ -1,17 +1,13 @@
 """Start the worker process."""
 
+
 # Preload libraries
 import argparse
 import logging
 
 from rq import Worker
 
-from . import (
-    settings,
-    # We're importing the tasks module here to reduce any task setup cost after forking.
-    tasks,  # noqa
-    utils,
-)
+from backtick import settings, utils
 
 
 def main() -> None:

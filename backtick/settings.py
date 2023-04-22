@@ -13,6 +13,8 @@ BACKTICK_LOG_LEVEL = os.environ["BACKTICK_LOG_LEVEL"]
 BACKTICK_TASKS = {
     "do_something": "backtick.tasks.do_something",
     "raise_exception": "backtick.tasks.raise_exception",
+    "raise_exception_again": "backtick.tasks.raise_exception_again",
+    "make_request": "backtick.tasks.make_request",
 }
 
 BACKTICK_QUEUES = {
