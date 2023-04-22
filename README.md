@@ -135,7 +135,7 @@ This will return:
 Check the worker logs to ensure that the tasks get run successfully.
 
 
-### Cancelling scheduled tasks
+### Canceling scheduled tasks
 
 Use the `POST /unschedule` endpoint to cancel scheduled tasks.
 
@@ -442,7 +442,7 @@ command to stop the workers:
 make stop-workers
 ```
 
-### Cancelling the running tasks
+### Canceling the running tasks
 
 To cancel the currently, running tasks, execute:
 
@@ -450,7 +450,7 @@ To cancel the currently, running tasks, execute:
 make cancel-running-tasks
 ```
 
-### Cancelling all scheduled tasks
+### Canceling all scheduled tasks
 
 Run `make cancel-scheduled-tasks` to cancel all the future scheduled tasks.
 

@@ -191,7 +191,7 @@ def test_submit_scheduled_tasks_retry(mock_settings):
 
 @pytest.mark.integration()
 @patch("backtick.dispatch.utils.discover_task", new=lambda _: task_retry)
-def test_cancelled_tasks(mock_settings):
+def test_cancel_tasks(mock_settings):
     with patch("backtick.dispatch.settings", mock_settings):
         dt = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(
             seconds=5
