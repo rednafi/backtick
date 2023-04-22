@@ -7,6 +7,10 @@
 anyio==3.6.2
     # via httpcore
 black==23.3.0
+    # via
+    #   -r requirements-dev.in
+    #   blacken-docs
+blacken-docs==1.13.0
     # via -r requirements-dev.in
 build==0.10.0
     # via pip-tools

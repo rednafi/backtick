@@ -40,7 +40,7 @@ dep-sync: ## Sync venv installation with 'requirements.txt' file.
 ###########################################
 
 .PHONY: lint
-lint: black ruff mypy	## Apply all the linters.
+lint: black blacken-docs ruff mypy	## Apply all the linters.
 
 
 .PHONY: lint-check
@@ -61,6 +61,16 @@ black: ## Apply black.
 	@echo "================="
 	@echo
 	@black --fast $(path)
+	@echo
+
+
+.PHONY: blacken-docs
+blacken-docs: ## Apply black to docs.
+	@echo
+	@echo "Applying blacken-docs..."
+	@echo "========================"
+	@echo
+	@blacken-docs -l 88 -t py311 README.md
 	@echo
 
 
@@ -87,22 +97,22 @@ mypy: ## Apply mypy.
 
 .PHONY: up
 up: ## Start the development environment.
-	docker compose up -d
+	@docker compose up -d
 
 
 .PHONY: down
 down: ## Stop the development environment.
-	docker compose down
+	@docker compose down
 
 
 .PHONY: test-up
 test-up: ## Start the integration test environment.
-	docker compose -f docker-compose-test.yml up -d
+	@docker compose -f docker-compose-test.yml up -d
 
 
 .PHONY: test-down
 test-down: ## Stop the integration test environment.
-	docker compose -f docker-compose-test.yml down
+	@docker compose -f docker-compose-test.yml down
 
 
 ###########################################
@@ -111,17 +121,17 @@ test-down: ## Stop the integration test environment.
 
 .PHONY: test
 test: ## Run all the tests.
-	docker compose -f docker-compose-test.yml exec test pytest -v -s
+	@docker compose -f docker-compose-test.yml exec test pytest -v -s
 
 
 .PHONY: test-integration
 test-integration: ## Run the integration tests.
-	docker compose -f docker-compose-test.yml exec test pytest -v -s -m integration
+	@docker compose -f docker-compose-test.yml exec test pytest -v -s -m integration
 
 
 .PHONY: test-unit
 test-unit: ## Run the unit tests.
-	docker compose -f docker-compose-test.yml exec test pytest -v -s -m 'not integration'
+	@docker compose -f docker-compose-test.yml exec test pytest -v -s -m 'not integration'
 
 
 ###########################################
@@ -130,19 +140,19 @@ test-unit: ## Run the unit tests.
 
 .PHONY: stop-workers
 stop-workers: ## Stop the workers.
-	docker compose exec worker python -m scripts.stop_workers
+	@docker compose exec worker python -m scripts.stop_workers
 
 
 .PHONY: cancel-running-tasks
 cancel-running-tasks: ## Cancel all the running tasks.
-	docker compose exec worker python -m scripts.cancel_tasks --running
+	@docker compose exec worker python -m scripts.cancel_tasks --running
 
 
 .PHONY: cancel-scheduled-tasks
 cancel-scheduled-tasks: ## Cancel all the scheduled tasks.
-	docker compose exec worker python -m scripts.cancel_tasks --scheduled
+	@docker compose exec worker python -m scripts.cancel_tasks --scheduled
 
 
 .PHONY: cancel-all-tasks
 cancel-all-tasks: ## Cancel all the tasks.
-	docker compose exec worker python -m scripts.cancel_tasks --all
+	@docker compose exec worker python -m scripts.cancel_tasks --all

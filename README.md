@@ -180,7 +180,7 @@ module, you'll be able to see the `do_something` task that we've seen so far:
 import logging
 import time
 
-from . import utils
+from backtick import utils
 
 
 @utils.task(
@@ -211,7 +211,7 @@ needs to be included to the `BACKTICK_TASKS` dict on the `backtick.settings` mod
 # backtick/settings.py
 
 BACKTICK_TASKS = {
-    "do_something": "backtick.tasks.do_something" # fully qualified task name
+    "do_something": "backtick.tasks.do_something"  # fully qualified task name
 }
 ```
 
@@ -228,7 +228,7 @@ a task has to be defined like this:
 
 from rq import Retry
 
-from . import settings, utils
+from backtick import settings, utils
 
 
 @utils.task(
@@ -257,9 +257,7 @@ You'll have to register the task before you can call the `/schedule` endpoint:
 ```python
 # backtick/settings.py
 
-BACKTICK_TASKS = {
-    "raise_exception": "backtick.tasks.raise_exception"
-}
+BACKTICK_TASKS = {"raise_exception": "backtick.tasks.raise_exception"}
 ```
 
 Now, you can make a request to the endpoint to schedule an immediate or a future task;
@@ -362,10 +360,11 @@ You can define a task as follows to employ exponential backoff in your retry log
 # backtick/tasks.py
 from rq import Retry
 
-from . import settings, utils
+from backtick import settings, utils
 
 # This will retry the raise_exception function in 2^1, 2^2, 2^3 seconds.
 interval_with_backoff = [2**i for i in range(1, 4)]
+
 
 @utils.task(
     queue=settings.BACKTICK_QUEUES["default"],
@@ -392,6 +391,10 @@ If you need to attach rq's `on_success` or `on_failure` callbacks, you can do th
 this:
 
 ```python
+# black/tasks.py
+from rq import Retry
+
+from backtick import settings, utils
 
 interval_with_backoff = [2**i for i in range(3)]
 

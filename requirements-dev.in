@@ -1,13 +1,8 @@
-# For linting.
 black
-ruff
-mypy
-
-# For dep management.
-pip-tools
-
-# For testing.
-pytest
-
-types-redis
+blacken-docs
 httpx
+mypy
+pip-tools
+pytest
+ruff
+types-redis
