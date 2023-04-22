@@ -141,3 +141,4 @@ cython_debug/
 # Custom
 .redis_data/
 .ruff_cache/
+.DS_Store

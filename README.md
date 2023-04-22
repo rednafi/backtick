@@ -1,4 +1,3 @@
-
 <h1>
 backtick<img src='https://user-images.githubusercontent.com/30027932/233198527-8391a8fd-91d7-4e46-9a41-fed18fda0dde.png'
 align='right' width='128' height='128'></h1>
@@ -8,17 +7,17 @@ align='right' width='128' height='128'></h1>
 </strong>
 
 ---
-
-
-![rq][rq-badge]
-![fastapi][fastapi-badge]
-![pytest][pytest-badge]
+[![rq][rq-badge]][rq]
+[![fastapi][fastapi-badge]][fastapi]
+[![pytest][pytest-badge]][pytest]
 
 Backtick demonstrates a pattern that enables you to schedule asynchronous background
 tasks through HTTP calls. You can choose to execute the task immediately or schedule it
 for a future timestamp. Once scheduled, a worker process will pick up the task and
 execute it in the background. Additionally, you have the option to cancel a scheduled
 task by calling another endpoint.
+
+---
 
 ## Rationale
 
@@ -285,15 +284,19 @@ the first failed call with 2 seconds of interval between them.
   ```
   backtick-web-1     | INFO:root:Task 35bfdfb4-a6ff-41db-8420-3e672b81c046 scheduled
   backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
-  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]:
+  exception raised while executing (backtick.tasks.raise_exception)
   backtick-worker-1  | Traceback (most recent call last):
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py",
+  line 1359, in perform_job
   backtick-worker-1  |     rv = job.perform()
   backtick-worker-1  |          ^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1178, in perform
   backtick-worker-1  |     self._result = self._execute()
   backtick-worker-1  |                    ^^^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1215, in _execute
   backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
   backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
@@ -301,15 +304,19 @@ the first failed call with 2 seconds of interval between them.
   backtick-worker-1  | ValueError: This is an exception
   backtick-worker-1  |
   backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
-  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]:
+  exception raised while executing (backtick.tasks.raise_exception)
   backtick-worker-1  | Traceback (most recent call last):
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py",
+  line 1359, in perform_job
   backtick-worker-1  |     rv = job.perform()
   backtick-worker-1  |          ^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1178, in perform
   backtick-worker-1  |     self._result = self._execute()
   backtick-worker-1  |                    ^^^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1215, in _execute
   backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
   backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
@@ -317,15 +324,19 @@ the first failed call with 2 seconds of interval between them.
   backtick-worker-1  | ValueError: This is an exception
   backtick-worker-1  |
   backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
-  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]:
+  exception raised while executing (backtick.tasks.raise_exception)
   backtick-worker-1  | Traceback (most recent call last):
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py",
+  line 1359, in perform_job
   backtick-worker-1  |     rv = job.perform()
   backtick-worker-1  |          ^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1178, in perform
   backtick-worker-1  |     self._result = self._execute()
   backtick-worker-1  |                    ^^^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1215, in _execute
   backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
   backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
@@ -333,15 +344,19 @@ the first failed call with 2 seconds of interval between them.
   backtick-worker-1  | ValueError: This is an exception
   backtick-worker-1  |
   backtick-worker-1  | INFO:rq.worker:default: backtick.tasks.raise_exception() (35bfdfb4-a6ff-41db-8420-3e672b81c046)
-  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]: exception raised while executing (backtick.tasks.raise_exception)
+  backtick-worker-1  | ERROR:rq.worker:[Job 35bfdfb4-a6ff-41db-8420-3e672b81c046]:
+  exception raised while executing (backtick.tasks.raise_exception)
   backtick-worker-1  | Traceback (most recent call last):
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py", line 1359, in perform_job
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/worker.py",
+  line 1359, in perform_job
   backtick-worker-1  |     rv = job.perform()
   backtick-worker-1  |          ^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1178, in perform
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1178, in perform
   backtick-worker-1  |     self._result = self._execute()
   backtick-worker-1  |                    ^^^^^^^^^^^^^^^
-  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py", line 1215, in _execute
+  backtick-worker-1  |   File "/usr/local/lib/python3.11/site-packages/rq/job.py",
+  line 1215, in _execute
   backtick-worker-1  |     result = self.func(*self.args, **self.kwargs)
   backtick-worker-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   backtick-worker-1  |   File "/code/backtick/tasks.py", line 48, in raise_exception
@@ -358,6 +373,7 @@ You can define a task as follows to employ exponential backoff in your retry log
 
 ```python
 # backtick/tasks.py
+
 from rq import Retry
 
 from backtick import settings, utils
@@ -392,6 +408,7 @@ this:
 
 ```python
 # black/tasks.py
+
 from rq import Retry
 
 from backtick import settings, utils
@@ -492,6 +509,9 @@ build that feature so that it works with the existing `/schedule` endpoint.
 [fastapi-badge]: https://img.shields.io/badge/fastapi-teal?style=for-the-badge
 [pytest-badge]: https://img.shields.io/badge/pytest-blue?style=for-the-badge
 
+[rq]: https://python-rq.org/
+[fastapi]: https://fastapi.tiangolo.com/
+[pytest]: https://docs.pytest.org/en/7.3.x/
 [celery]: https://docs.celeryq.dev/en/stable/
 [persistent-worker]: https://docs.celeryq.dev/en/stable/userguide/workers.html#persistent-revokes
 [docker]: https://www.docker.com/
@@ -502,3 +522,9 @@ build that feature so that it works with the existing `/schedule` endpoint.
 [api-doc-eager-tasks-b]: https://user-images.githubusercontent.com/30027932/233484001-0258fbca-8d4f-47ad-8efc-8adf462b1e8e.png
 
 [rq-job-decorator]: https://python-rq.org/docs/#the-job-decorator
+
+---
+
+<div align="center">
+<i> ✨ 🍰 ✨ </i>
+</div>
