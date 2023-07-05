@@ -74,7 +74,7 @@ sniffio==1.3.0
     #   httpx
 types-pyopenssl==23.1.0.2
     # via types-redis
-types-redis==4.6.0.1
+types-redis==4.6.0.2
     # via -r requirements-dev.in
 typing-extensions==4.5.0
     # via mypy
