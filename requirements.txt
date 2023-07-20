@@ -21,7 +21,7 @@ click==8.1.3
     #   uvicorn
 fastapi==0.100.0
     # via -r requirements.in
-gunicorn==21.1.0
+gunicorn==21.2.0
     # via -r requirements.in
 h11==0.14.0
     # via
