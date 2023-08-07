@@ -19,7 +19,7 @@ click==8.1.3
     # via
     #   rq
     #   uvicorn
-fastapi==0.100.1
+fastapi==0.101.0
     # via -r requirements.in
 gunicorn==21.2.0
     # via -r requirements.in
