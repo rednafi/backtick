@@ -30,9 +30,9 @@ cryptography==40.0.2
     #   types-redis
 h11==0.14.0
     # via httpcore
-httpcore==0.17.0
+httpcore==0.18.0
     # via httpx
-httpx==0.24.1
+httpx==0.25.0
     # via -r requirements-dev.in
 idna==3.4
     # via
