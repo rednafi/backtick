@@ -5,7 +5,9 @@
 #    pip-compile --no-emit-options --output-file=requirements-dev.txt --resolver=backtracking requirements-dev.in
 #
 anyio==3.6.2
-    # via httpcore
+    # via
+    #   httpcore
+    #   httpx
 black==23.10.1
     # via
     #   -r requirements-dev.in
@@ -32,7 +34,7 @@ h11==0.14.0
     # via httpcore
 httpcore==0.18.0
     # via httpx
-httpx==0.25.0
+httpx==0.25.1
     # via -r requirements-dev.in
 idna==3.4
     # via
