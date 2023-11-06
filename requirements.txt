@@ -63,8 +63,10 @@ typing-extensions==4.8.0
     # via
     #   fastapi
     #   pydantic
-uvicorn[standard]==0.23.2
-    # via -r requirements.in
+uvicorn[standard]==0.24.0
+    # via
+    #   -r requirements.in
+    #   uvicorn
 uvloop==0.17.0
     # via uvicorn
 watchfiles==0.19.0
