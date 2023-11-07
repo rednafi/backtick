@@ -64,7 +64,7 @@ typing-extensions==4.8.0
     # via
     #   fastapi
     #   pydantic
-uvicorn[standard]==0.24.0
+uvicorn[standard]==0.24.0.post1
     # via
     #   -r requirements.in
     #   uvicorn
