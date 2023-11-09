@@ -8,7 +8,7 @@ anyio==3.6.2
     # via
     #   httpcore
     #   httpx
-black==23.10.1
+black==23.11.0
     # via
     #   -r requirements-dev.in
     #   blacken-docs
