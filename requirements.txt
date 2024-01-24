@@ -41,7 +41,7 @@ packaging==23.1
     # via gunicorn
 pydantic==1.10.7
     # via fastapi
-python-dotenv==1.0.0
+python-dotenv==1.0.1
     # via
     #   -r requirements.in
     #   uvicorn
@@ -62,9 +62,7 @@ typing-extensions==4.8.0
     #   fastapi
     #   pydantic
 uvicorn[standard]==0.27.0
-    # via
-    #   -r requirements.in
-    #   uvicorn
+    # via -r requirements.in
 uvloop==0.17.0
     # via uvicorn
 watchfiles==0.19.0
