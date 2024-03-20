@@ -6,7 +6,7 @@
 #
 anyio==3.6.2
     # via httpx
-black==24.2.0
+black==24.3.0
     # via
     #   -r requirements-dev.in
     #   blacken-docs
